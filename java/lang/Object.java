@@ -26,6 +26,7 @@
 package java.lang;
 
 /**
+ * 类Object是类层次结构的根类。每个类都使用Object作为超类。所有对象(包括数组)都实现这个类的所有方法。
  * Class {@code Object} is the root of the class hierarchy.
  * Every class has {@code Object} as a superclass. All objects,
  * including arrays, implement the methods of this class.
@@ -35,13 +36,17 @@ package java.lang;
  * @since   JDK1.0
  */
 public class Object {
-
+    //一个本地[native]方法，具体是用C（C++）在DLL中实现的，然后通过JNI[Java Native Interface：Java本地接口]调用
     private static native void registerNatives();
+    //对象初始化时自动调用此方法
     static {
         registerNatives();
     }
 
     /**
+     * 返回Object的运行时类，返回的 Class对象是由static synchronized所表示的类的方法锁定的对象。
+     * 注：每一个类在被加载的时候，都会生成一个Class类实例，而这个方法就可以在运行时期获得对象（这里的对象是堆里的那个对象，也就是获得的是动态类型的那个类）的Class对象，
+     * Class对象主要用于反射。
      * Returns the runtime class of this {@code Object}. The returned
      * {@code Class} object is the object that is locked by {@code
      * static synchronized} methods of the represented class.
@@ -63,6 +68,14 @@ public class Object {
     public final native Class<?> getClass();
 
     /**
+     * 返回对象的散列码，是 int 类型的数值。
+     *
+     * hashCode的常规协定有：
+     * 1.在 Java 应用程序执行期间，在对同一对象多次调用 hashCode 方法时，必须一致地返回相同的整数，前提是将对象进行 equals 比较时所用的信息没有被修改。
+     *   从某一应用程序的一次执行到同一应用程序的另一次执行，该整数无需保持一致。
+     * 2.如果根据 equals(Object) 方法，两个对象是相等的，那么对这两个对象中的每个对象调用 hashCode 方法都必须生成相同的整数结果。
+     * 3.如果根据 equals(java.lang.Object) 方法，两个对象不相等，那么对这两个对象中的任一对象上调用 hashCode 方法不 要求一定生成不同的整数结果。
+     *   但是，编程者应该意识到，为不相等的对象生成不同整数结果可以提高哈希表的性能。
      * Returns a hash code value for the object. This method is
      * supported for the benefit of hash tables such as those provided by
      * {@link java.util.HashMap}.
@@ -100,6 +113,14 @@ public class Object {
     public native int hashCode();
 
     /**
+     * 判断某个其他对象是否“等于”此对象。
+     *
+     * 该equals方法在非null对象引用上实现等价关系（对equals方法的使用需遵循以下几个原则）：
+         *   自反性：对于任何非空引用值 x，x.equals(x) 都应返回 true。
+         *   对称性：对于任何非空引用值 x 和 y，当且仅当 y.equals(x) 返回 true 时，x.equals(y) 才应返回 true。
+         *   传递性：对于任何非空引用值 x、y 和 z，如果 x.equals(y) 返回 true，并且 y.equals(z) 返回 true，那么 x.equals(z) 应返回 true。
+         *   一致性：对于任何非空引用值 x 和 y，多次调用 x.equals(y) 始终返回 true 或始终返回 false，前提是对象上 equals 比较中所用的信息没有被修改。
+         *   对于任何非空引用值 x，x.equals(null) 都应返回 false。
      * Indicates whether some other object is "equal to" this one.
      * <p>
      * The {@code equals} method implements an equivalence relation
@@ -145,11 +166,19 @@ public class Object {
      * @see     #hashCode()
      * @see     java.util.HashMap
      */
+    //Object 类中，== 运算符和 equals 方法是等价的，都是比较两个对象的引用是否相等，从另一方面来讲，如果两个对象的引用相等，那么这两个对象一定是相等的。
     public boolean equals(Object obj) {
         return (this == obj);
     }
 
     /**
+     * 克隆对象，克隆一个与原先对象所有字段值相等的对象，从而获得一个新的对象。
+     * 要使用这个方法，对象类型必须实现Cloneable接口，否则会报错，原因是Object的clone方法有对对象类型验证，如没实现则报错抛CloneNotSupportedException。
+     *
+     * Object.clone()默认走的是浅拷贝。因此需要注意：
+          *克隆的目的是复制对象，但是新的对象是独立于原来的对象的，一般我们在克隆出来的对象的一些属性做了更改，这个时候需要小心一点，如果更改的属性是引用数据类型，
+           可能会影响到原来的对象，如果都是基本数据类型或或对不变对象的引用则不影响。
+          *实现深克隆需要在实现类中重写clone方法，将引用变量变成值传递而不是引用传递。
      * Creates and returns a copy of this object.  The precise meaning
      * of "copy" may depend on the class of the object. The general
      * intent is that, for any object {@code x}, the expression:
@@ -212,6 +241,8 @@ public class Object {
     protected native Object clone() throws CloneNotSupportedException;
 
     /**
+     * 返回该对象的字符串表示，当然，Object不可能知道子类的字段信息，所以，默认toString输出的是：全路径类名+@+hash值。
+     * 若要输出类的字段信息，需要在类中重写toString方法，将该类字段信息以自定义格式输出。
      * Returns a string representation of the object. In general, the
      * {@code toString} method returns a string that
      * "textually represents" this object. The result should
@@ -237,6 +268,7 @@ public class Object {
     }
 
     /**
+     * 随机唤醒等待（wait）队列中一个线程，使其需要该对象的线程继续执行。
      * Wakes up a single thread that is waiting on this object's
      * monitor. If any threads are waiting on this object, one of them
      * is chosen to be awakened. The choice is arbitrary and occurs at
@@ -271,6 +303,7 @@ public class Object {
     public final native void notify();
 
     /**
+     * 唤醒等待（wait）队列中所有线程。
      * Wakes up all threads that are waiting on this object's monitor. A
      * thread waits on an object's monitor by calling one of the
      * {@code wait} methods.
@@ -295,6 +328,7 @@ public class Object {
     public final native void notifyAll();
 
     /**
+     * 导致当前线程等待，直到另一个线程调用此对象的 notify()方法或 notifyAll()方法，或者已经过了指定的时间量。
      * Causes the current thread to wait until either another thread invokes the
      * {@link java.lang.Object#notify()} method or the
      * {@link java.lang.Object#notifyAll()} method for this object, or a
@@ -382,6 +416,8 @@ public class Object {
     public final native void wait(long timeout) throws InterruptedException;
 
     /**
+     * 在其他线程调用此对象的 notify() 方法或 notifyAll() 方法，或者其他某个线程中断当前线程，或者已超过某个实际时间量前，导致当前线程等待
+     * 该方法允许更好地控制在放弃之前等待通知的时间量（纳秒单位）
      * Causes the current thread to wait until another thread invokes the
      * {@link java.lang.Object#notify()} method or the
      * {@link java.lang.Object#notifyAll()} method for this object, or
@@ -461,6 +497,8 @@ public class Object {
     }
 
     /**
+     * 在其他线程调用此对象的 notify() 方法或 notifyAll() 方法前，导致当前线程等待。换句话说，此方法的行为就好像它仅执行 wait(0) 调用一样。
+     * 当前线程必须拥有此对象监视器。该线程发布对此监视器的所有权并等待，直到其他线程通过调用 notify 方法，或 notifyAll 方法通知在此对象的监视器上等待的线程醒来。然后该线程将等到重新获得对监视器的所有权后才能继续执行。
      * Causes the current thread to wait until another thread invokes the
      * {@link java.lang.Object#notify()} method or the
      * {@link java.lang.Object#notifyAll()} method for this object.
@@ -503,6 +541,8 @@ public class Object {
     }
 
     /**
+     * 当垃圾回收器确定不存在对该对象的更多引用时，由对象的垃圾回收器调用此方法。
+     * 该方法一般由 JVM 自动调用，一般不需要程序员去手动调用该方法。
      * Called by the garbage collector on an object when garbage collection
      * determines that there are no more references to the object.
      * A subclass overrides the {@code finalize} method to dispose of
