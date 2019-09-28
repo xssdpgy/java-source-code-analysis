@@ -28,6 +28,7 @@ package java.lang;
 import java.lang.annotation.Native;
 
 /**
+ * Integer 是用 final 声明的常量类，不能被任何类所继承。并且 Integer 类继承了 Number 类和实现了 Comparable 接口。
  * The {@code Integer} class wraps a value of the primitive type
  * {@code int} in an object. An object of type {@code Integer}
  * contains a single field whose type is {@code int}.
@@ -385,6 +386,7 @@ public final class Integer extends Number implements Comparable<Integer> {
         //
 
     /**
+     * toString重载之一  内部调用了 stringSize() 和 getChars() 方法
      * Returns a {@code String} object representing the
      * specified integer. The argument is converted to signed decimal
      * representation and returned as a string, exactly as if the
@@ -467,6 +469,8 @@ public final class Integer extends Number implements Comparable<Integer> {
     final static int [] sizeTable = { 9, 99, 999, 9999, 99999, 999999, 9999999,
                                       99999999, 999999999, Integer.MAX_VALUE };
 
+    //用来计算参数 i 的位数也就是转成字符串之后的字符串的长度，
+    //内部结合一个已经初始化好的int类型的数组sizeTable来完成这个计算
     // Requires positive x
     static int stringSize(int x) {
         for (int i=0; ; i++)
@@ -475,6 +479,7 @@ public final class Integer extends Number implements Comparable<Integer> {
     }
 
     /**
+     * 将字符串转换成整型输出  指定进制
      * Parses the string argument as a signed integer in the radix
      * specified by the second argument. The characters in the string
      * must all be digits of the specified radix (as determined by
@@ -537,16 +542,17 @@ public final class Integer extends Number implements Comparable<Integer> {
          * before IntegerCache is initialized. Care must be taken to not use
          * the valueOf method.
          */
-
+        //如果转换的字符串如果为null，直接抛出空指针异常
         if (s == null) {
             throw new NumberFormatException("null");
         }
-
+        //如果转换的radix(默认是10)<2 则抛出数字格式异常，因为进制最小是 2 进制
         if (radix < Character.MIN_RADIX) {
             throw new NumberFormatException("radix " + radix +
                                             " less than Character.MIN_RADIX");
         }
-
+        //如果转换的radix(默认是10)>36 则抛出数字格式异常，因为0到9一共10位，a到z一共26位，所以一共36位
+        //也就是最高只能有36进制数
         if (radix > Character.MAX_RADIX) {
             throw new NumberFormatException("radix " + radix +
                                             " greater than Character.MAX_RADIX");
@@ -554,24 +560,28 @@ public final class Integer extends Number implements Comparable<Integer> {
 
         int result = 0;
         boolean negative = false;
-        int i = 0, len = s.length();
+        int i = 0, len = s.length(); //len是待转换字符串的长度
         int limit = -Integer.MAX_VALUE;
         int multmin;
         int digit;
-
+        //如果待转换字符串长度大于 0
         if (len > 0) {
-            char firstChar = s.charAt(0);
+            char firstChar = s.charAt(0);//获取待转换字符串的第一个字符
+            //这里主要用来判断第一个字符是"+"或者"-"，因为这两个字符的 ASCII码都小于字符'0'
             if (firstChar < '0') { // Possible leading "+" or "-"
-                if (firstChar == '-') {
+                if (firstChar == '-') {//如果第一个字符是'-'
                     negative = true;
                     limit = Integer.MIN_VALUE;
-                } else if (firstChar != '+')
+                } else if (firstChar != '+') //如果第一个字符不是 '+'，直接抛出异常
                     throw NumberFormatException.forInputString(s);
-
+                //再加一层判断，如果长度为1，即该字符为"-" 或者 "+",显然不是数字，抛出异常
                 if (len == 1) // Cannot have lone "+" or "-"
                     throw NumberFormatException.forInputString(s);
                 i++;
             }
+            //通过不断循环，将字符串除掉第一个字符之后，根据进制不断相乘在相加得到一个正整数
+            //比如 parseInt("2abc",16) = 2*16的3次方+10*16的2次方+11*16+12*1
+            //parseInt("123",10) = 1*10的2次方+2*10+3*1
             multmin = limit / radix;
             while (i < len) {
                 // Accumulating negatively avoids surprises near MAX_VALUE
@@ -588,13 +598,15 @@ public final class Integer extends Number implements Comparable<Integer> {
                 }
                 result -= digit;
             }
-        } else {
+        } else { //如果待转换字符串长度小于等于0，直接抛出异常
             throw NumberFormatException.forInputString(s);
         }
+        //根据第一个字符得到的正负号，在结果前面加上符号
         return negative ? result : -result;
     }
 
     /**
+     * 将字符串转换成整型输出
      * Parses the string argument as a signed decimal integer. The
      * characters in the string must all be decimal digits, except
      * that the first character may be an ASCII minus sign {@code '-'}
@@ -827,6 +839,7 @@ public final class Integer extends Number implements Comparable<Integer> {
      * @since  1.5
      */
     public static Integer valueOf(int i) {
+        //自动装箱 当i的值 -128 <= i <= 127 返回的是缓存类中的对象，并没有重新创建一个新的对象
         if (i >= IntegerCache.low && i <= IntegerCache.high)
             return IntegerCache.cache[i + (-IntegerCache.low)];
         return new Integer(i);
@@ -840,6 +853,7 @@ public final class Integer extends Number implements Comparable<Integer> {
     private final int value;
 
     /**
+     * 构造方法一
      * Constructs a newly allocated {@code Integer} object that
      * represents the specified {@code int} value.
      *
@@ -851,6 +865,7 @@ public final class Integer extends Number implements Comparable<Integer> {
     }
 
     /**
+     * 构造方法二：将字符串数据转换成整型数据
      * Constructs a newly allocated {@code Integer} object that
      * represents the {@code int} value indicated by the
      * {@code String} parameter. The string is converted to an
@@ -864,6 +879,7 @@ public final class Integer extends Number implements Comparable<Integer> {
      * @see        java.lang.Integer#parseInt(java.lang.String, int)
      */
     public Integer(String s) throws NumberFormatException {
+        ////调用parseInt(s,10)方法，s表示需要转换的字符串，10表示以十进制输出，默认也是10进制
         this.value = parseInt(s, 10);
     }
 
@@ -886,6 +902,7 @@ public final class Integer extends Number implements Comparable<Integer> {
     }
 
     /**
+     * 自动拆箱
      * Returns the value of this {@code Integer} as an
      * {@code int}.
      */
@@ -922,6 +939,7 @@ public final class Integer extends Number implements Comparable<Integer> {
     }
 
     /**
+     * 继承自Object，toString方法重载之一
      * Returns a {@code String} object representing this
      * {@code Integer}'s value. The value is converted to signed
      * decimal representation and returned as a string, exactly as if
@@ -1200,6 +1218,7 @@ public final class Integer extends Number implements Comparable<Integer> {
     }
 
     /**
+     * compareTo 方法内部直接调用 compare 方法
      * Compares two {@code Integer} objects numerically.
      *
      * @param   anotherInteger   the {@code Integer} to be compared.
