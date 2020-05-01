@@ -85,6 +85,10 @@ public class ThreadLocal<T> {
     private final int threadLocalHashCode = nextHashCode();
 
     /**
+     * static + AtomicInteger 保证了在一台机器中每个 ThreadLocal 的 threadLocalHashCode 是唯一的
+     * 被 static 修饰非常关键，因为一个线程在处理业务的过程中，ThreadLocalMap 是会被 set 多个 ThreadLocal 的，多个 ThreadLocal 就依靠 threadLocalHashCode 进行区分
+     * 所有 ThreadLocal 共享，但每次构造一个 ThreadLocal 实例，其值都会更新
+     *
      * The next hash code to be given out. Updated atomically. Starts at
      * zero.
      */
@@ -92,6 +96,8 @@ public class ThreadLocal<T> {
         new AtomicInteger();
 
     /**
+     * HASH_INCREMENT 是一个特殊哈希魔数，这主要与斐波那契散列法以及黄金分割有关
+     *
      * The difference between successively generated hash codes - turns
      * implicit sequential thread-local IDs into near-optimally spread
      * multiplicative hash values for power-of-two-sized tables.
@@ -99,6 +105,8 @@ public class ThreadLocal<T> {
     private static final int HASH_INCREMENT = 0x61c88647;
 
     /**
+     * 返回计算出的下一个哈希值，其值为 i * HASH_INCREMENT，其中 i 代表调用次数
+     *
      * Returns the next hash code.
      */
     private static int nextHashCode() {
@@ -106,6 +114,8 @@ public class ThreadLocal<T> {
     }
 
     /**
+     * 为 ThreadLocal 对象设置关联的初值，具体逻辑可由子类实现
+     *
      * Returns the current thread's "initial value" for this
      * thread-local variable.  This method will be invoked the first
      * time a thread accesses the variable with the {@link #get}
@@ -142,6 +152,8 @@ public class ThreadLocal<T> {
     }
 
     /**
+     * 构造 ThreadLocal 实例
+     *
      * Creates a thread local variable.
      * @see #withInitial(java.util.function.Supplier)
      */
@@ -149,6 +161,8 @@ public class ThreadLocal<T> {
     }
 
     /**
+     * 返回当前 ThreadLocal 对象关联的值
+     *
      * Returns the value in the current thread's copy of this
      * thread-local variable.  If the variable has no value for the
      * current thread, it is first initialized to the value returned
@@ -157,20 +171,28 @@ public class ThreadLocal<T> {
      * @return the current thread's value of this thread-local
      */
     public T get() {
+        //1.首先获取当前线程
         Thread t = Thread.currentThread();
+        //2.获取线程的map对象
         ThreadLocalMap map = getMap(t);
+        //3.如果map不为空，以threadlocal实例为key获取到对应Entry，然后从Entry中取出对象即可
         if (map != null) {
+            // 从 map 中拿到 entry
             ThreadLocalMap.Entry e = map.getEntry(this);
+            // 如果不为空，读取当前 ThreadLocal 中保存的值
             if (e != null) {
                 @SuppressWarnings("unchecked")
                 T result = (T)e.value;
                 return result;
             }
         }
+        //如果map为空，也就是第一次没有调用set直接get（或者调用过set，又调用了remove）时，为其设定初始值
         return setInitialValue();
     }
 
     /**
+     * 初始化 ThreadLocalMap，并存储键值对 <key, value>，最后返回 value
+     *
      * Variant of set() to establish initialValue. Used instead
      * of set() in case user has overridden the set() method.
      *
@@ -197,11 +219,16 @@ public class ThreadLocal<T> {
      *        this thread-local.
      */
     public void set(T value) {
+        // 获取当前线程对象
         Thread t = Thread.currentThread();
+        // 获取当前线程本地变量Map
         ThreadLocalMap map = getMap(t);
+        // map不为空
         if (map != null)
+            //存值
             map.set(this, value);
         else
+            //创建一个当前线程本地变量map
             createMap(t, value);
     }
 
