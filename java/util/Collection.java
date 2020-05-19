@@ -121,6 +121,7 @@ import java.util.stream.StreamSupport;
  * specific synchronization protocol, then it must override default
  * implementations to apply that protocol.
  *
+ * 集合包含的元素
  * @param <E> the type of elements in this collection
  *
  * @author  Josh Bloch

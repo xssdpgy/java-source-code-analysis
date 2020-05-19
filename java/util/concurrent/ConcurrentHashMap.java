@@ -1364,6 +1364,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     }
 
     /**
+     * 在类中扮演锁的角色
      * Stripped-down version of helper class used in previous version,
      * declared for the sake of serialization compatibility
      */

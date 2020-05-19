@@ -299,6 +299,7 @@ public abstract class AbstractQueuedSynchronizer
     protected AbstractQueuedSynchronizer() { }
 
     /**
+     * 同步队列中的节点，用于保存获取同步状态失败的线程引用，等待状态以及前驱和后继节点
      * Wait queue node class.
      *
      * <p>The wait queue is a variant of a "CLH" (Craig, Landin, and
@@ -396,6 +397,7 @@ public abstract class AbstractQueuedSynchronizer
         static final int PROPAGATE = -3;
 
         /**
+         * 等待状态
          * Status field, taking on only the values:
          *   SIGNAL:     The successor of this node is (or will soon be)
          *               blocked (via park), so the current node must
@@ -466,6 +468,9 @@ public abstract class AbstractQueuedSynchronizer
         volatile Thread thread;
 
         /**
+         * 等待队列中的后继节点。
+         * 如果当前节点是共享的，那么这个字段将是一个SHARED常量，即节点类型（独占和共享）
+         * 和等待队列中的后继节共用同一个字段
          * Link to next node waiting on condition, or the special
          * value SHARED.  Because condition queues are accessed only
          * when holding in exclusive mode, we just need a simple
@@ -904,6 +909,7 @@ public abstract class AbstractQueuedSynchronizer
     }
 
     /**
+     * 独占式超时获取同步状态
      * Acquires in exclusive timed mode.
      *
      * @param arg the acquire argument
@@ -1077,6 +1083,7 @@ public abstract class AbstractQueuedSynchronizer
     }
 
     /**
+     * 释放同步状态
      * Attempts to set the state to reflect a release in exclusive
      * mode.
      *
@@ -1103,6 +1110,7 @@ public abstract class AbstractQueuedSynchronizer
     }
 
     /**
+     * 返回值大于等于0，表示能够获取到同步状态
      * Attempts to acquire in shared mode. This method should query if
      * the state of the object permits it to be acquired in the shared
      * mode, and if so to acquire it.
@@ -1183,6 +1191,7 @@ public abstract class AbstractQueuedSynchronizer
     }
 
     /**
+     * 独占式同步状态获取
      * Acquires in exclusive mode, ignoring interrupts.  Implemented
      * by invoking at least once {@link #tryAcquire},
      * returning on success.  Otherwise the thread is queued, possibly
@@ -1268,6 +1277,7 @@ public abstract class AbstractQueuedSynchronizer
     }
 
     /**
+     * 共享式获取同步状态
      * Acquires in shared mode, ignoring interrupts.  Implemented by
      * first invoking at least once {@link #tryAcquireShared},
      * returning on success.  Otherwise the thread is queued, possibly
